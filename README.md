@@ -1,1 +1,1 @@
-# Rusty-Fuzz
+# Rusty-Fuzzer
