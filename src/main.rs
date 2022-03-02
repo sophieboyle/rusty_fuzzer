@@ -21,4 +21,8 @@ fn main() {
 
     let bytes = get_bytes(args[1].clone());
     write_jpg(bytes);
+
+    // Only perform flips on 1% of bytes (excluding markers)
+    let markers = 2;
+    n_flips = (bytes.len() - 4) * 0.1;
 }
