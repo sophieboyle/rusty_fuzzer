@@ -1,9 +1,15 @@
 use std::env;
-use std::fs::read;
+use std::fs::{File, read};
+use std::io::Write;
 
 fn get_bytes(filename : String) -> Vec<u8>{
     let bytes_vector = read(filename).unwrap();
     return bytes_vector;
+}
+
+fn write_jpg(data : Vec<u8>){
+    let mut f = File::create("output.jpg").unwrap();
+    f.write_all(&data).unwrap();
 }
 
 fn main() {
@@ -14,5 +20,5 @@ fn main() {
     }
 
     let bytes = get_bytes(args[1].clone());
-    print!("Test");
+    write_jpg(bytes);
 }
