@@ -45,7 +45,7 @@ fn main() {
     // Only perform flips on 1% of bytes (excluding markers)
     let markers = 2;
     let marker_len = 2;
-    let n_flips = ((bytes.len() as i32 - (markers * marker_len)) as f64 * 0.1).floor() as i32;
+    let n_flips = ((bytes.len() as i32 - (markers * marker_len)) as f64 * 0.01).floor() as i32;
     let selected_i = select_indexes(bytes.len() as i32, n_flips);
 
     write_jpg(bytes);
