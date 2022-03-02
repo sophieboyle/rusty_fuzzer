@@ -14,7 +14,8 @@ fn write_jpg(data : Vec<u8>){
 }
 
 fn select_indexes(n_indexes : i32, n_selections: i32) -> Vec<i32>{
-    let index_range : Vec<i32> = (0..n_indexes).collect();
+    // Excludes start of image and end of image markers from index range
+    let index_range : Vec<i32> = (2..(n_indexes - 2)).collect();
     let mut selected_indexes = Vec::new();
 
     while selected_indexes.len() != n_selections as usize {
@@ -59,10 +60,8 @@ fn main() {
 
     let mut bytes = get_bytes(args[1].clone());
 
-    // Only perform flips on 1% of bytes (excluding markers)
-    let markers = 2;
-    let marker_len = 2;
-    let n_flips = ((bytes.len() as i32 - (markers * marker_len)) as f64 * 0.01).floor() as i32;
+    // Only perform flips on 1% of bytes
+    let n_flips = ((bytes.len() as i32) as f64 * 0.01).floor() as i32;
     let selected_i = select_indexes(bytes.len() as i32, n_flips);
 
     bytes = flip_bits(bytes, selected_i);
