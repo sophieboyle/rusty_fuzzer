@@ -3,6 +3,8 @@ use std::fs::{File, read};
 use std::io::Write;
 use rand::seq::{SliceRandom};
 use std::thread;
+use std::sync::mpsc::channel;
+use std::process::{Command, Stdio};
 
 fn get_bytes(filename : String) -> Vec<u8>{
     let bytes_vector = read(filename).unwrap();
@@ -167,11 +169,15 @@ fn main() {
     }
 
     let bytes = get_bytes(args[1].clone());
+    let target_script = args[2].clone();
+
+    let (sender, reciever) = channel();
 
     // Spawn 20 threads, each of which will create a mutated image 500 times
     for i in 0..20{
         let mut bytes_clone = bytes.clone();
         let i_clone = i.clone();
+        let sender_clone = sender.clone();
         thread::spawn(move || {
             let original_bytes = bytes_clone.clone();
             for j in 0..500{
@@ -193,10 +199,45 @@ fn main() {
                         panic!("Could not choose between functions");
                     }
                 }
-                write_jpg(bytes_clone, String::from(format!("output/{}-{}-output.jpg", i_clone, j)));
+                let filename = String::from(format!("output/{}-{}-output.jpg", i_clone, j));
+                write_jpg(bytes_clone, filename.clone());
+                let res = sender_clone.send(filename.clone());
+                match res {
+                    Ok(_) => {
+                        continue;
+                    },
+                    Err(e) => {
+                        panic!("Error sending {} to triage thread: {}", filename, e);
+                    }
+                }
             }
         });
     }
 
+    // Triage thread
+    let triage_thread = thread::spawn(move || {
+        for i in 0..10000 {
+            let filename = reciever.recv().unwrap();
+            // let cmd = String::from(format!("{} {}", target_script, filename));
+            let mut cmd = Command::new(&target_script);
+            let cmd_output = cmd.arg(&filename).stdout(Stdio::piped());
+            match cmd_output.status() {
+                Ok(status) => {
+                    match status.code() {
+                        None => {
+                            println!("Process terminated by signal: {}", filename);
+                        },
+                        _ => {
+                            continue;
+                        }
+                    }
+                },
+                Err(e) => {
+                    println!("Could not get status for {}: {}", filename, e);
+                }
+            }
+        }
+    });
 
+    triage_thread.join().unwrap();
 }
