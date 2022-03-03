@@ -50,6 +50,113 @@ fn flip_bits(mut bytes : Vec<u8>, byte_indexes : Vec<i32>) -> Vec<u8>{
     return bytes;
 }
 
+fn get_magic_number() -> (i32, i32){
+    // Format: (length in bytes, value of leading byte)
+    let magic = [
+        (1, 255),
+        (1, 255),
+        (1, 127),
+        (1, 0),
+        (2, 255),
+        (2, 0),
+        (4, 255),
+        (4, 0),
+        (4, 128),
+        (4, 64),
+        (4, 127)
+    ];
+
+    let magic_opt = magic.choose(&mut rand::thread_rng());
+    match magic_opt{
+        Some(num) => {
+            return *num;
+        },
+        None => {
+            panic!("Could not select magic number");
+        }
+    }
+}
+
+fn overwrite_with_magic(mut bytes : Vec<u8>, magic_n : (i32, i32)) -> Vec<u8>{
+    match magic_n.0 {
+        1 => {
+            let indexes : Vec<i32> = (2..(bytes.len()) as i32 -2).collect();
+            let index_opt = indexes.choose(&mut rand::thread_rng());
+            match index_opt {
+                Some(i) => {
+                    bytes[*i as usize] = magic_n.1 as u8;
+                },
+                None => {
+                    panic!("Cannot choose index");
+                }
+            }
+        },
+        2 => {
+            let indexes : Vec<i32> = (2..(bytes.len()) as i32 -3).collect();
+            let index_opt = indexes.choose(&mut rand::thread_rng());
+            match index_opt {
+                Some(i) => {
+                    bytes[*i as usize] = magic_n.1 as u8;
+                    bytes[(*i + 1) as usize] = magic_n.1 as u8;
+                },
+                None => {
+                    panic!("Cannot choose index");
+                }
+            }
+        },
+        4 => {
+            let indexes : Vec<i32> = (2..(bytes.len()) as i32 -6).collect();
+            let index_opt = indexes.choose(&mut rand::thread_rng());
+            match index_opt {
+                Some(i) => {
+                    match magic_n.1 {
+                        225 => {
+                            bytes[*i as usize] = 255;
+                            bytes[(*i + 1) as usize] = 225;
+                            bytes[(*i + 1) as usize] = 225;
+                            bytes[(*i + 1) as usize] = 225;
+                        },
+                        0 => {
+                            bytes[*i as usize] = 0;
+                            bytes[(*i + 1) as usize] = 0;
+                            bytes[(*i + 1) as usize] = 0;
+                            bytes[(*i + 1) as usize] = 0;
+                        },
+                        128 => {
+                            bytes[*i as usize] = 128;
+                            bytes[(*i + 1) as usize] = 0;
+                            bytes[(*i + 1) as usize] = 0;
+                            bytes[(*i + 1) as usize] = 0;
+                        },
+                        64 => {
+                            bytes[*i as usize] = 64;
+                            bytes[(*i + 1) as usize] = 0;
+                            bytes[(*i + 1) as usize] = 0;
+                            bytes[(*i + 1) as usize] = 0;
+                        },
+                        127 => {
+                            bytes[*i as usize] = 127;
+                            bytes[(*i + 1) as usize] = 255;
+                            bytes[(*i + 1) as usize] = 255;
+                            bytes[(*i + 1) as usize] = 255;
+                        },
+                        _ => {
+                            panic!("Invalid magic byte");
+                        }
+                    }
+                },
+                None => {
+                    panic!("Cannot choose index");
+                }
+            }
+        },
+        _ => {
+            panic!("Invalid magic number length");
+        }
+    }
+    return bytes;
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
 
