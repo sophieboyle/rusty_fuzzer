@@ -111,7 +111,7 @@ fn overwrite_with_magic(mut bytes : Vec<u8>, magic_n : (i32, i32)) -> Vec<u8>{
             match index_opt {
                 Some(i) => {
                     match magic_n.1 {
-                        225 => {
+                        255 => {
                             bytes[*i as usize] = 255;
                             bytes[(*i + 1) as usize] = 225;
                             bytes[(*i + 1) as usize] = 225;
@@ -142,7 +142,7 @@ fn overwrite_with_magic(mut bytes : Vec<u8>, magic_n : (i32, i32)) -> Vec<u8>{
                             bytes[(*i + 1) as usize] = 255;
                         },
                         _ => {
-                            panic!("Invalid magic byte");
+                            panic!("Invalid magic byte {} {}", magic_n.0, magic_n.1);
                         }
                     }
                 },
@@ -168,23 +168,35 @@ fn main() {
 
     let mut bytes = get_bytes(args[1].clone());
 
-    // Randomly choose between bit-flipping or magic number mutation
-    let options : Vec<i32> = (0..2).collect();
-    match options.choose(&mut rand::thread_rng()){
-        Some(0) => {
-            // Only perform flips on 1% of bytes
-            let n_flips = ((bytes.len() as i32) as f64 * 0.01).floor() as i32;
-            let selected_i = select_indexes(bytes.len() as i32, n_flips);
-            bytes = flip_bits(bytes, selected_i);
-        },
-        Some(1) => {
-            let magic_n = get_magic_number();
-            bytes = overwrite_with_magic(bytes, magic_n);
-        },
-        _ => {
-            panic!("Could not choose between functions");
-        }
+    // Spawn 20 threads, each of which will create a mutated image 500 times
+    for i in 0..20{
+        let mut bytes_clone = bytes.clone();
+        let i_clone = i.clone();
+        thread::spawn(move || {
+            let original_bytes = bytes_clone.clone();
+            for j in 0..500{
+                bytes_clone = original_bytes.clone();
+                // Randomly choose between bit-flipping or magic number mutation
+                let options : Vec<i32> = (0..2).collect();
+                match options.choose(&mut rand::thread_rng()){
+                    Some(0) => {
+                        // Only perform flips on 1% of bytes
+                        let n_flips = ((bytes_clone.len() as i32) as f64 * 0.01).floor() as i32;
+                        let selected_i = select_indexes(bytes_clone.len() as i32, n_flips);
+                        bytes_clone = flip_bits(bytes_clone, selected_i);
+                    },
+                    Some(1) => {
+                        let magic_n = get_magic_number();
+                        bytes_clone = overwrite_with_magic(bytes_clone, magic_n);
+                    },
+                    _ => {
+                        panic!("Could not choose between functions");
+                    }
+                }
+                write_jpg(bytes_clone, String::from(format!("{}-{}-output.jpg", i_clone, j)));
+            }
+        });
     }
 
-    write_jpg(bytes, String::from("output.jpg"));
+
 }
