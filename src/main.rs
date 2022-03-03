@@ -2,14 +2,15 @@ use std::env;
 use std::fs::{File, read};
 use std::io::Write;
 use rand::seq::{SliceRandom};
+use std::thread;
 
 fn get_bytes(filename : String) -> Vec<u8>{
     let bytes_vector = read(filename).unwrap();
     return bytes_vector;
 }
 
-fn write_jpg(data : Vec<u8>){
-    let mut f = File::create("output.jpg").unwrap();
+fn write_jpg(data : Vec<u8>, filename : String){
+    let mut f = File::create(filename).unwrap();
     f.write_all(&data).unwrap();
 }
 
@@ -185,5 +186,5 @@ fn main() {
         }
     }
 
-    write_jpg(bytes);
+    write_jpg(bytes, String::from("output.jpg"));
 }
