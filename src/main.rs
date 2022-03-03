@@ -160,18 +160,30 @@ fn overwrite_with_magic(mut bytes : Vec<u8>, magic_n : (i32, i32)) -> Vec<u8>{
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() != 2 {
-        println!("Usage: cargo run <jpg-path>");
+    if args.len() != 3 {
+        println!("Usage: cargo run <jpg-path> <fuzzing-target-path");
         return;
     }
 
     let mut bytes = get_bytes(args[1].clone());
 
-    // Only perform flips on 1% of bytes
-    let n_flips = ((bytes.len() as i32) as f64 * 0.01).floor() as i32;
-    let selected_i = select_indexes(bytes.len() as i32, n_flips);
-
-    bytes = flip_bits(bytes, selected_i);
+    // Randomly choose between bit-flipping or magic number mutation
+    let options : Vec<i32> = (0..2).collect();
+    match options.choose(&mut rand::thread_rng()){
+        Some(0) => {
+            // Only perform flips on 1% of bytes
+            let n_flips = ((bytes.len() as i32) as f64 * 0.01).floor() as i32;
+            let selected_i = select_indexes(bytes.len() as i32, n_flips);
+            bytes = flip_bits(bytes, selected_i);
+        },
+        Some(1) => {
+            let magic_n = get_magic_number();
+            bytes = overwrite_with_magic(bytes, magic_n);
+        },
+        _ => {
+            panic!("Could not choose between functions");
+        }
+    }
 
     write_jpg(bytes);
 }
