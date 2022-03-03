@@ -166,7 +166,7 @@ fn main() {
         return;
     }
 
-    let mut bytes = get_bytes(args[1].clone());
+    let bytes = get_bytes(args[1].clone());
 
     // Spawn 20 threads, each of which will create a mutated image 500 times
     for i in 0..20{
@@ -193,7 +193,7 @@ fn main() {
                         panic!("Could not choose between functions");
                     }
                 }
-                write_jpg(bytes_clone, String::from(format!("{}-{}-output.jpg", i_clone, j)));
+                write_jpg(bytes_clone, String::from(format!("output/{}-{}-output.jpg", i_clone, j)));
             }
         });
     }
